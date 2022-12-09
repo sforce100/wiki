@@ -257,7 +257,7 @@ module.exports = {
             builder.orWhereIn('id', _.isString(curPage.ancestors) ? JSON.parse(curPage.ancestors) : curPage.ancestors)
           }
         }
-      }).orderBy([{ column: 'isFolder', order: 'desc' }, 'title'])
+      }).orderBy([{ column: 'sortnum', order: 'desc' }, { column: 'isFolder', order: 'desc' }, 'title'])
       return results.filter(r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
@@ -594,7 +594,36 @@ module.exports = {
       } catch (err) {
         return graphHelper.generateError(err)
       }
-    }
+    },
+    /**
+     * MOVE PAGE
+     */
+     async sortTree(obj, args, context) {
+      try {
+        const page = await WIKI.models.pageTree.query().findById(args.treeId)
+        if (!page) {
+          throw new WIKI.Error.PageNotFound()
+        }
+
+        if (!WIKI.auth.checkAccess(context.req.user, ['write:pages'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          throw new WIKI.Error.PageRestoreForbidden()
+        }
+
+        await WIKI.models.pageTree.updateSortnum({
+          ...args,
+          user: context.req.user
+        })
+
+        return {
+          responseResult: graphHelper.generateSuccess('PageTree restored successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
   },
   Page: {
     async tags (obj) {

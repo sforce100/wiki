@@ -2,20 +2,6 @@
   v-container(fluid, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
-        .admin-header
-          img.animated.fadeInUp(src='/_assets/svg/icon-file.svg', alt='Page', style='width: 80px;')
-          .admin-header-title
-            .headline.blue--text.text--darken-2.animated.fadeInLeft Pages
-            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Manage pages
-          v-spacer
-          v-btn.animated.fadeInDown.wait-p1s(icon, color='grey', outlined, @click='refresh')
-            v-icon.grey--text mdi-refresh
-          v-btn.animated.fadeInDown.mx-3(color='primary', outlined, @click='recyclebin', disabled)
-            v-icon(left) mdi-delete-outline
-            span Recycle Bin
-          v-btn.animated.fadeInDown(color='primary', depressed, large, to='pages/visualize')
-            v-icon(left) mdi-graph
-            span Visualize
         v-card.mt-3.animated.fadeInUp
           .pa-2.d-flex.align-center(:class='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-3`')
             v-text-field(
@@ -23,7 +9,7 @@
               flat
               v-model='search'
               prepend-inner-icon='mdi-file-search-outline'
-              label='Search Pages...'
+              label='Search Title...'
               hide-details
               dense
               style='max-width: 400px;'
@@ -37,16 +23,6 @@
               label='Locale'
               :items='langs'
               v-model='selectedLang'
-              style='max-width: 250px;'
-            )
-            v-select.ml-2(
-              solo
-              flat
-              hide-details
-              dense
-              label='Publish State'
-              :items='states'
-              v-model='selectedState'
               style='max-width: 250px;'
             )
           v-divider
@@ -64,16 +40,23 @@
             @page-count="pageTotal = $event"
           )
             template(slot='item', slot-scope='props')
-              tr.is-clickable(:active='props.selected', @click='$router.push(`/pages/` + props.item.id)')
+              tr
                 td.text-xs-right {{ props.item.id }}
                 td
                   .body-2: strong {{ props.item.title }}
-                  .caption {{ props.item.description }}
                 td.admin-pages-path
                   v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
                   span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
-                td {{ props.item.createdAt | moment('calendar') }}
-                td {{ props.item.updatedAt | moment('calendar') }}
+                td 
+                  v-text-field(
+                    type='number'
+                    label='序号'
+                    required
+                    v-model='props.item.sortnum'
+                    hide-details="auto"
+                    @keydown.enter="submitSortnum"
+                    :data-item-id='props.item.id'
+                  )
             template(slot='no-data')
               v-alert.ma-3(icon='mdi-alert', :value='true', outlined) No pages to display.
           .text-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
@@ -82,7 +65,9 @@
 
 <script>
 import _ from 'lodash'
-import pagesQuery from 'gql/admin/pages/pages-query-list.gql'
+import pagesQuery from 'gql/admin/pages/pages-query-tree.gql'
+import pageTreeMutation from 'gql/admin/pages/pages-mutation-sortTree.gql'
+
 export default {
   data() {
     return {
@@ -94,8 +79,7 @@ export default {
         { text: 'ID', value: 'id', width: 80, sortable: true },
         { text: 'Title', value: 'title' },
         { text: 'Path', value: 'path' },
-        { text: 'Created', value: 'createdAt', width: 250 },
-        { text: 'Last Updated', value: 'updatedAt', width: 250 }
+        { text: 'SortNum', value: 'sortnum', width: 250 }
       ],
       search: '',
       selectedLang: null,
@@ -142,13 +126,47 @@ export default {
     newpage() {
       this.pageSelectorShown = true
     },
-    recyclebin () { }
+    recyclebin () { },
+    async submitSortnum(e) {
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: pageTreeMutation,
+          variables: {
+            treeId: parseInt(e.target.dataset.itemId),
+            sortnum: parseInt(e.target.value)
+          },
+          watchLoading (isLoading) {
+            // this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-create')
+          }
+        })
+        if (_.get(resp, 'data.pages.sortTree.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'success',
+            message: 'SortNum update successfully.',
+            icon: 'check'
+          })
+        } else {
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: _.get(resp, 'data.pages.sortTree.responseResult.message', 'An unexpected error occurred.'),
+            icon: 'alert'
+          })
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+    }
   },
   apollo: {
     pages: {
       query: pagesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.pages.list,
+      variables: {
+        parent: 0,
+        mode: 'ALL',
+        locale: 'en'
+      },
+      update: (data) => data.pages.tree,
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')

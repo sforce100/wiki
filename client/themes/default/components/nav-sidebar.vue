@@ -154,6 +154,7 @@ export default {
                 pageId
                 parent
                 locale
+                sortnum
               }
             }
           }
@@ -182,6 +183,7 @@ export default {
                 pageId
                 parent
                 locale
+                sortnum
               }
             }
           }

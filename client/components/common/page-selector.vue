@@ -287,6 +287,7 @@ export default {
                 isFolder
                 pageId
                 parent
+                sortnum
               }
             }
           }

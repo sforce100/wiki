@@ -1,0 +1,12 @@
+mutation ($treeId: Int!, $sortnum: Int!) {
+  pages {
+    sortTree(treeId: $treeId, sortnum: $sortnum) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

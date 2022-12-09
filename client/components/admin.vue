@@ -29,6 +29,9 @@
               v-list-item-action(style='min-width:auto;')
                 v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-5`')
                   .caption.grey--text {{ info.pagesTotal }}
+            v-list-item(to='/pagetree', color='primary', v-if='hasPermission([`manage:system`, `write:pages`, `manage:pages`, `delete:pages`])')
+              v-list-item-avatar(size='24', tile): v-icon mdi-folder-outline
+              v-list-item-title 目录管理
             v-list-item(to='/tags', v-if='hasPermission([`manage:system`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-tag-multiple
               v-list-item-title {{ $t('admin:tags.title') }}
@@ -163,6 +166,7 @@ const router = new VueRouter({
     { path: '/pages', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-pages.vue') },
     { path: '/pages/:id(\\d+)', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-pages-edit.vue') },
     { path: '/pages/visualize', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-pages-visualize.vue') },
+    { path: '/pagetree', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-pagetree.vue') },
     { path: '/tags', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-tags.vue') },
     { path: '/theme', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-theme.vue') },
     { path: '/groups', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-groups.vue') },

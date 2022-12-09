@@ -158,6 +158,11 @@ type PageMutation {
   purgeHistory (
     olderThan: String!
   ): DefaultResponse @auth(requires: ["manage:system"])
+
+  sortTree (
+    treeId: Int!
+    sortnum: Int!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -289,6 +294,7 @@ type PageTreeItem {
   parent: Int
   pageId: Int
   locale: String!
+  sortnum: Int
 }
 
 type PageLinkItem {

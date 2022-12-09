@@ -30,6 +30,7 @@ module.exports = async (pageId) => {
         })
         if (!found) {
           pik++
+          const treeSortTmp = await WIKI.models.pageTreeSort.query().findOne({path: currentPath})
           tree.push({
             id: pik,
             localeCode: page.localeCode,
@@ -41,7 +42,8 @@ module.exports = async (pageId) => {
             privateNS: !isFolder ? page.privateNS : null,
             parent: parentId,
             pageId: isFolder ? null : page.id,
-            ancestors: JSON.stringify(ancestors)
+            ancestors: JSON.stringify(ancestors),
+            sortnum: treeSortTmp === undefined ? 0 : treeSortTmp.sortnum
           })
           parentId = pik
         } else if (isFolder && !found.isFolder) {
