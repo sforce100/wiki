@@ -269,6 +269,25 @@ module.exports = {
         locale: r.localeCode
       }))
     },
+    async treeList (obj, args, context, info) {
+      if (!args.locale) { args.locale = WIKI.config.lang.code }
+
+      const results = await WIKI.models.knex('pageTree').where(builder => {
+        if (!args.locale) {
+          builder.where('localeCode', args.locale)
+        }
+      }).orderBy([{ column: 'sortnum', order: 'desc' }, { column: 'isFolder', order: 'desc' }, 'title'])
+      return results.filter(r => {
+        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+          path: r.path,
+          locale: r.localeCode
+        })
+      }).map(r => ({
+        ...r,
+        parent: r.parent || 0,
+        locale: r.localeCode
+      }))
+    },
     /**
      * FETCH PAGE LINKS
      */

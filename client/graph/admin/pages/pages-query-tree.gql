@@ -1,6 +1,6 @@
-query ($parent: Int!, $mode: PageTreeMode!, $locale: String!) {
+query ($parent: Int, $mode: PageTreeMode, $locale: String) {
   pages {
-    tree(parent: $parent, mode: $mode, locale: $locale) {
+    treeList(parent: $parent, mode: $mode, locale: $locale) {
       id
       path
       title
